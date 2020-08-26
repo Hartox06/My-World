@@ -1,2 +1,2 @@
 # hello-world
-Dév d'un jeu en 2D
+Dev d'un jeu en 2D
