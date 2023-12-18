@@ -13,61 +13,52 @@ public class TilePriorityQ {
 	public int size;
 
 	// TODO level 3: implement the constructor for the priority queue
-	public TilePriorityQ (ArrayList<Tile> vertices) {
+	public TilePriorityQ (ArrayList<Tile> vertices) {	//OKAY
 		for (Tile verticesToAdd : vertices){	//we add all the vertices to the array list heap
 			heap.add(verticesToAdd);
 		}
 		size = heap.size();
-		for (int k=(size/2) -1; k>= 0; k--) {
-			downHeap(k);
+		for (int index=(size/2) -1; index>= 0; index--) {
+			downHeap(index);
 		}
 	}
 
 	// TODO level 3: implement remove min as seen in class
-	public Tile removeMin() {
-		Tile tmp = heap.get(0);	//we store the root
-		heap.set(0,heap.get(size-1));	//we set the root to the last leaf node
-		heap.remove(size -1);	//we remove the last leaf node
-		size--;	//as we remove one element, the size decreases by one as well
-		downHeap(0);
-		return tmp;	//we return the element remove
+	public Tile removeMin() {	//OKAY
+		Tile minTile = heap.get(0);	//we store the root
+		Tile lastTile = heap.remove(--size);	//store and remove the last element
+		if (size > 0){
+			heap.set(0,lastTile);	//we set the root to the last Tile
+			downHeap(0);
+		}
+		return minTile;	//we return the element removed
 	}
 
 	// TODO level 3: implement updateKeys as described in the pdf
 	public void updateKeys(Tile t, Tile newPred, double newEstimate) {
-		int tileIdx = findTile(t);
-		if (tileIdx == -1) {
-			return;
-		}
+		int tileIndex = TileIndex(t);
+		if (tileIndex == -1) return;	//we check wether or not the tile belongs to the queue
+		Tile tile = heap.get(tileIndex);
+		updateTile(tile, newPred, newEstimate, tileIndex);
+	}
 
-		Tile tile = heap.get(tileIdx);
-		tile.predecessor = newPred;		//update predecessor field
-		double oldEstimate = tile.costEstimate;
-
-		if (oldEstimate != newEstimate) {
-			tile.costEstimate = newEstimate;		//update cost estimate field
-			//make sure heap property is maintained:
-			if (oldEstimate > newEstimate) {
-				upHeap(tileIdx);
-			} else {
-				downHeap(tileIdx);
-			}
+	private void updateTile(Tile tile, Tile newPred, double newEstimate, int tileIndex) {
+		tile.predecessor = newPred;
+		double previousEstimate = tile.costEstimate;
+		if (previousEstimate > newEstimate) {
+			tile.costEstimate = newEstimate;
+			adjustHeap(tileIndex, previousEstimate, newEstimate);
 		}
 	}
 
-	public void add(Tile tile) {
-		if (findTile(tile) != -1) {
-			updateKeys(tile,tile.predecessor,tile.costEstimate);
-		} else {
-			heap.add(size, tile);
-			size++;
-			upHeap(size - 1);
+	private void adjustHeap(int tileIndex, double oldEstimate, double newEstimate) {	//Helper method to adjust the heap
+		if (newEstimate < oldEstimate) {
+			upHeap(tileIndex);
+		} else if (newEstimate > oldEstimate) {
+			downHeap(tileIndex);
 		}
-
 	}
-
-
-	private int findTile(Tile t) {
+	private int TileIndex(Tile t) {		//Helper methods to find the index of a specific tile, if the tile doesn't exist it returns -1
 		for (int index=0; index<size; index++) {
 			if (heap.get(index).nodeID == t.nodeID) {
 				return index;
@@ -76,31 +67,53 @@ public class TilePriorityQ {
 		return -1;
 	}
 
-	private void downHeap(int startIdx) {
-		while (2*startIdx + 1 < size) {		//if there is a left child
-			int child = 2*startIdx+1;
-			if (child + 1 < size) {		//if there is a right sibling
-				if (heap.get(child + 1).costEstimate < heap.get(child).costEstimate) {		//if right child < left child
-					child++;
-				}
-			}
-			if (heap.get(child).costEstimate < heap.get(startIdx).costEstimate) {		//do we need to swap with child?
-				Tile temp = heap.get(startIdx);
-				heap.set(startIdx, heap.get(child));
-				heap.set(child, temp);
-				startIdx = child;
-			} else {
-				break;
-			}
+	/*
+	public void add(Tile tile) {
+		if (TileIndex(tile) != -1) {
+			updateKeys(tile,tile.predecessor,tile.costEstimate);
+		} else {
+			heap.add(size, tile);
+			size++;
+			upHeap(size - 1);
 		}
 	}
 
-	private void upHeap(int i) {
-		while ( i > 0 && heap.get(i).costEstimate < heap.get((i-1)/2).costEstimate){
-			Tile temp = heap.get(i);
-			heap.set(i, heap.get((i-1)/2));
-			heap.set((i-1)/2, temp);
-			i = (i-1)/2;
+	 */
+
+	private void downHeap(int originIndex) {
+		while (2*originIndex + 1 < size) {		//we check wether or no there is a left child
+			int smallerChild = findSmallerChild(originIndex);
+			if (heap.get(smallerChild).costEstimate >= heap.get(originIndex).costEstimate) {
+				break;
+			}
+			swapElements(originIndex,smallerChild);
+			originIndex = smallerChild;
+			}
+	}
+
+	private int findSmallerChild(int index) {	//helper method to find the smallest child
+		int leftChild = 2*index+1;
+		int rightChild = leftChild + 1;
+		if (rightChild < size && heap.get(rightChild).costEstimate < heap.get(leftChild).costEstimate) {
+			return rightChild;
 		}
+		return leftChild;
+	}
+
+
+	private void upHeap(int index) {
+		while (index > 0){
+			if (heap.get(index).costEstimate >= heap.get((index-1)/2).costEstimate){
+				break;
+			}
+			swapElements(index,(index-1)/2);
+			index = (index-1)/2;
+		}
+	}
+
+	private void swapElements(int indexOne, int indexTwo) {	//helper method to swap elements (use in downHeap and upHeap to make the methode more readable)
+		Tile tmp = heap.get(indexOne);
+		heap.set(indexOne, heap.get(indexTwo));
+		heap.set(indexTwo, tmp);
 	}
 }

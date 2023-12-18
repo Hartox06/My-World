@@ -21,7 +21,6 @@ public abstract class PathFindingService {
     //TODO level 4: Implement basic dijkstra's algorithm to find a path to the final unknown destination
     public ArrayList<Tile> findPath(Tile startNode) {
         dijkstra(startNode);
-
         for (Tile t : S) {
             if (t.isDestination) {
                 startNode = t;
@@ -53,29 +52,6 @@ public abstract class PathFindingService {
         }
 
         path.addAll(findPath(start));
-
-        /*
-        ArrayList<Tile> realP = new ArrayList<>();
-        realP.add(g.vertices.get(g.matrixIdx.indexOf(0))); realP.add(g.vertices.get(g.matrixIdx.indexOf(1)));
-        realP.add(g.vertices.get(g.matrixIdx.indexOf(6))); realP.add(g.vertices.get(g.matrixIdx.indexOf(11)));
-        realP.add(g.vertices.get(g.matrixIdx.indexOf(16))); realP.add(g.vertices.get(g.matrixIdx.indexOf(17)));
-        realP.add(g.vertices.get(g.matrixIdx.indexOf(22))); realP.add(g.vertices.get(g.matrixIdx.indexOf(23)));
-        realP.add(g.vertices.get(g.matrixIdx.indexOf(24)));
-
-        System.out.println();
-        ArrayList<Tile> badP = new ArrayList<>();
-        badP.add(g.vertices.get(g.matrixIdx.indexOf(0))); badP.add(g.vertices.get(g.matrixIdx.indexOf(1)));
-        badP.add(g.vertices.get(g.matrixIdx.indexOf(6))); badP.add(g.vertices.get(g.matrixIdx.indexOf(11)));
-        badP.add(g.vertices.get(g.matrixIdx.indexOf(16))); badP.add(g.vertices.get(g.matrixIdx.indexOf(21)));
-        badP.add(g.vertices.get(g.matrixIdx.indexOf(22))); badP.add(g.vertices.get(g.matrixIdx.indexOf(23)));
-        badP.add(g.vertices.get(g.matrixIdx.indexOf(24)));
-
-        System.out.println();
-        System.out.println("Good path weight: " + g.computePathCost(realP));
-        System.out.println("Bad path weight: " + g.computePathCost(badP));
-         */
-
-
         return path;
     }
 
