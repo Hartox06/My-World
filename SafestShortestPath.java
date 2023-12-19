@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import finalproject.system.Tile;
+import finalproject.system.TileType;
 import finalproject.tiles.MetroTile;
+
 
 public class SafestShortestPath extends ShortestPath {
 	public int health;
@@ -22,12 +24,13 @@ public class SafestShortestPath extends ShortestPath {
 
 	
 	public void generateGraph() {
+		// TODO Auto-generated method stub
 		costGraph = new Graph(GraphTraversal.BFS(super.source));
 		for (Tile tile : GraphTraversal.BFS(super.source)) {
 			for (Tile neighbour : tile.neighbors) {
 				if (neighbour.isWalkable()) {
 					double weight = neighbour.distanceCost;
-					if (costGraph.areMetros(tile,neighbour)) {
+					if (tile.type== TileType.Metro && neighbour.type==TileType.Metro) {
 						((MetroTile) tile).fixMetro(neighbour);
 						weight = ((MetroTile) tile).metroDistanceCost;
 					}
@@ -48,7 +51,7 @@ public class SafestShortestPath extends ShortestPath {
 		}
 	}
 
-	@Override
+
 	public ArrayList<Tile> findPath(Tile start, LinkedList<Tile> waypoints) {
 		boolean returned = false;
 
@@ -102,8 +105,8 @@ public class SafestShortestPath extends ShortestPath {
 	}
 
 	private void fillAggGraph(double multiplier) {
-		for (int row=0; row < aggregatedGraph.numOfVertices; row++) {
-			for (int column=0; column < aggregatedGraph.numOfVertices; column++) {
+		for (int row=0; row < aggregatedGraph.numberOfVertices; row++) {
+			for (int column=0; column < aggregatedGraph.numberOfVertices; column++) {
 				if (aggregatedGraph.Matrix[row][column] != null) {
 					double distanceCost = costGraph.Matrix[row][column].weight;
 					double damageCost = damageGraph.Matrix[row][column].weight;
@@ -123,5 +126,4 @@ public class SafestShortestPath extends ShortestPath {
 		distance -= path.get(0).distanceCost;
 		return distance;
 	}
-
 }
