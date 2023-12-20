@@ -5,9 +5,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import finalproject.system.Tile;
-import finalproject.system.TileType;
-import finalproject.tiles.MetroTile;
-
 
 public class SafestShortestPath extends ShortestPath {
 	public int health;
@@ -26,15 +23,14 @@ public class SafestShortestPath extends ShortestPath {
 	public void generateGraph() {
 		// TODO Auto-generated method stub
 		costGraph = new Graph(GraphTraversal.BFS(super.source));
-		for (Tile tile : GraphTraversal.BFS(super.source)) {
-			for (Tile neighbour : tile.neighbors) {
-				if (neighbour.isWalkable()) {
-					double weight = neighbour.distanceCost;
-					if (tile.type== TileType.Metro && neighbour.type==TileType.Metro) {
-						((MetroTile) tile).fixMetro(neighbour);
-						weight = ((MetroTile) tile).metroDistanceCost;
+		for (Tile specificTile : GraphTraversal.BFS(super.source)) {
+			for (Tile neighbor : specificTile.neighbors) {
+				if (neighbor.isWalkable()) {
+					double weight = neighbor.distanceCost;
+					if (specificTile.isMetro() && neighbor.isMetro()) {
+						weight = g.helperLevel7Shortest(specificTile,neighbor);
 					}
-					costGraph.addEdge(tile, neighbour, weight);
+					costGraph.addEdge(specificTile, neighbor, weight);
 				}
 			}
 		}
@@ -53,77 +49,77 @@ public class SafestShortestPath extends ShortestPath {
 
 
 	public ArrayList<Tile> findPath(Tile start, LinkedList<Tile> waypoints) {
-		boolean returned = false;
-
-		super.g = costGraph;
-		ArrayList<Tile> pc = super.findPath(start,waypoints);		//shortest distance path
-		double dPc = getDamage(pc);									//damage cost of shortest distance path
-
-		if (dPc < health) {
+		//FIRST PART
+		super.g = costGraph;	//we set the graph field from the superclass equal to CostGraph
+		ArrayList<Tile> pc = super.findPath(start,waypoints);		//optimal path with least distance cost
+		double damagePc = costGraph.computePathCost(pc);									//damage cost of pc
+		if (damagePc<health) {
 			return pc;
 		}
 
-		super.g = damageGraph;
-		ArrayList<Tile> pd = super.findPath(start,waypoints);		//least damage path
-		double dPd = pd.get(pd.size()-1).costEstimate;				//damage cost of least damage path
-		if (dPd > health) {
+		//SECOND PART
+		super.g = damageGraph;	//we set the graph field from the superclass equal to DamageGraph
+		ArrayList<Tile> pd = super.findPath(start,waypoints);		//optimal path with least damage cost
+		double damagePd = damageGraph.computePathCost(pd);				//damage cost of the optimal path
+		if (damagePd>health) {
 			return null;
 		}
 
-		while(!returned) {
-			double cPc = pc.get(pc.size()-1).costEstimate;		//distance cost of shortest distance path
-			double cPd = getDistance(pd);						//distance cost of least damage path
+		//THIRD PART
+		while(true) {
+			double distancePc = getTotalDistance(pc);		//distance cost of shortest distance path
+			double distancePd = getTotalDistance(pd);						//distance cost of least damage path
+			double lambda = (distancePc-distancePd)/(damagePd - damagePc);
 
-			double multiplier = (cPc - cPd)/(dPd - dPc);
-			fillAggGraph(multiplier);
-
+			fillAggGraph(lambda);
 			super.g = aggregatedGraph;
 			ArrayList<Tile> pr = super.findPath(start,waypoints);
-			double damageCostpr = getDamage(pr);
-			double totalAggCost = pr.get(pr.size()-1).costEstimate;
-			double totalAggCostpc = cPc + (multiplier * dPc);
+			double distancePr = getTotalDistance(pr);
+			double damagePr = damageGraph.computePathCost(pr);
+			double totalAggregateCostPr = distancePr + (lambda*damagePr);
+			double totalAggregateCostPd = distancePc + (lambda*damagePc);
 
-			if (totalAggCost == totalAggCostpc) {
-				returned = true;
+			if (totalAggregateCostPr == totalAggregateCostPd) {
 				return pd;
-			} else if (health >= damageCostpr) {
-				pd = new ArrayList<>(pr);
+			} else if (totalAggregateCostPr <= health) {
+				pd=pr;
 			} else {
-				pc = new ArrayList<>(pc);
+				pc=pr;
 			}
 		}
-		return null;
-	}
-
-	private double getDamage(ArrayList<Tile> path) {
-		double damage = 0;
-		for (Tile tile : path) {
-			damage += tile.damageCost;
-		}
-		damage -= path.get(0).damageCost;
-		return damage;
 	}
 
 	private void fillAggGraph(double multiplier) {
 		for (int row=0; row < aggregatedGraph.numberOfVertices; row++) {
-			for (int column=0; column < aggregatedGraph.numberOfVertices; column++) {
-				if (aggregatedGraph.Matrix[row][column] != null) {
-					double distanceCost = costGraph.Matrix[row][column].weight;
-					double damageCost = damageGraph.Matrix[row][column].weight;
-					double aggCost = distanceCost + (multiplier * damageCost);
-					aggregatedGraph.Matrix[row][column].weight = aggCost;
-					aggregatedGraph.Matrix[column][row].weight = aggCost;
+			for (int col=0; col < aggregatedGraph.numberOfVertices; col++) {
+				if (aggregatedGraph.Matrix[row][col] != null) {
+					double aggCost = calculateAggregatedCost(row, col, multiplier);
+					aggregatedGraph.Matrix[row][col].weight = aggCost;
+					aggregatedGraph.Matrix[col][row].weight = aggCost;
 				}
 			}
 		}
 	}
 
-	private double getDistance(ArrayList<Tile> path) {
-		double distance = 0;
+	private double calculateAggregatedCost(int row, int col, double multiplier) {
+		double costOfDistance = costGraph.Matrix[row][col].weight;
+		double costOfDamage = damageGraph.Matrix[row][col].weight;
+		return costOfDistance + (multiplier * costOfDamage);
+	}
+
+	private double getTotalDamage(ArrayList<Tile> path) {
+		double totalDamage = 0;
 		for (Tile tile : path) {
-			distance += tile.distanceCost;
+			totalDamage = totalDamage + tile.damageCost;
 		}
-		distance -= path.get(0).distanceCost;
-		return distance;
+		return totalDamage - path.get(0).damageCost;
+	}
+
+	private double getTotalDistance(ArrayList<Tile> path) {
+		double totalDistance=0;
+		for (Tile specificTile : path) {
+			totalDistance = totalDistance + specificTile.distanceCost;
+		}
+		return totalDistance-path.get(0).distanceCost;
 	}
 }
