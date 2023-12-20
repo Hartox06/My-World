@@ -21,22 +21,19 @@ public class Graph {
         this.numberOfVertices = vertices.size();     //we store the number of vertices in the public field
         Matrix = new Edge[numberOfVertices][numberOfVertices];
         for (Tile verticeToAdd : vertices) {
-            if (!alreadyAdded.contains(verticeToAdd.nodeID)) {  //using the hash set, we check for each tile if it is not already added to avoid duplicates
-                alreadyAdded.add(verticeToAdd.nodeID); //we add the nodeID's in the array list matrixIdx
-                this.listOfVertices.add(verticeToAdd);
-                this.matrixIndex.add(verticeToAdd.nodeID);    //we add the nodeID's in the array list matrixIdx
-            }
+            alreadyAdded.add(verticeToAdd.nodeID); //we add the nodeID's in the array list matrixIdx
+            this.listOfVertices.add(verticeToAdd);
+            this.matrixIndex.add(verticeToAdd.nodeID);    //we add the nodeID's in the array list matrixIdx
         }
 	}
 	
     // TODO level 2: add an edge to the graph
-    public void addEdge(Tile origin, Tile destination, double weight){  //UNDERSTAND WHAT IS THE LAST ASSIGNMENT OF THE MATRIX
+    public void addEdge(Tile origin, Tile destination, double weight){
         int originIndex = matrixIndex.indexOf(origin.nodeID);    //get index of the origin tile
         int destinationIndex = matrixIndex.indexOf(destination.nodeID);     //get index of the destination tile
         Edge cur1 = new Edge(origin,destination,weight);
         Edge cur2 = new Edge(destination,origin,weight);
         Matrix[originIndex][destinationIndex] = cur1;      //add weight of path to adjacency matrix
-        //Matrix[destinationIdx][originIdx] = cur2;      //CHANGED TO PASS TESTER
     }
     
     // TODO level 2: return a list of all edges in the graph
@@ -65,7 +62,7 @@ public class Graph {
     }
 	
 	// TODO level 2: return total cost for the input path
-	public double computePathCost(ArrayList<Tile> path) {   //DETERMINE FOR THE ELSE STATEMENT IF WE SHOULD KEEP IT
+	public double computePathCost(ArrayList<Tile> path) {
         ArrayList<Integer> targetIndexs = new ArrayList<>();
         double totalWeight = 0;            //in case the path is empty it will return 0
         for (Tile tile : path) {        //fill in list of the indices of the Tiles in path
@@ -82,14 +79,17 @@ public class Graph {
         return totalWeight;  //return the weight of the path
 	}
 
-    /*
-    public boolean areMetros(Tile first, Tile second) {
-        if(first.type == TileType.Metro && second.type == TileType.Metro) {
-            return true;
-        }
-        return false;
+    public double helperLevel7Fastest(Tile specificTile, Tile neighbor){
+        ((MetroTile) specificTile).fixMetro(neighbor);
+        return ((MetroTile) specificTile).metroTimeCost;
+
     }
-     */
+
+    public double helperLevel7Shortest(Tile specificTile, Tile neighbor){
+        ((MetroTile) specificTile).fixMetro(neighbor);
+        return ((MetroTile) specificTile).metroDistanceCost;
+
+    }
 	
    
     public static class Edge{
@@ -116,7 +116,24 @@ public class Graph {
 
             return this.destination;
         }
-        
     }
-    
+
+    /*
+    public static void main(String[] args) {
+        ArrayList<Tile> testVertices = new ArrayList<>();
+        testVertices.add(new DesertTile());
+        testVertices.add(new MountainTile());
+        testVertices.add(new PlainTile());
+        testVertices.add(new MetroTile());
+        testVertices.add(new ZombieInfectedRuinTile());
+        Graph testGraph = new Graph(testVertices);
+        System.out.println(testVertices);
+        System.out.println(testGraph.listOfVertices);
+        for (int i =0;i<testGraph.numberOfVertices;i++){
+            testGraph.addEdge(testGraph.listOfVertices.get(0), testGraph.listOfVertices.get(1), i);
+        }
+        System.out.println(testGraph.getAllEdges());
+    }
+
+     */
 }
