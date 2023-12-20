@@ -11,62 +11,66 @@ public abstract class PathFindingService {
 	Graph g;
     TilePriorityQ PriorityQueue;
     ArrayList<Tile> ShortestPath;
-	
+
 	public PathFindingService(Tile start) {
+
         this.source = start;
     }
 
 	public abstract void generateGraph();
-    
+
     //TODO level 4: Implement basic dijkstra's algorithm to find a path to the final unknown destination
-    public ArrayList<Tile> findPath(Tile startNode) {
+    public ArrayList<Tile> findPath(Tile startNode) {   //OKAY
         dijkstra(startNode);
-        for (Tile tile : ShortestPath) {
-            if (tile.isDestination) {
-                startNode = tile;
+        for (Tile specificTile : ShortestPath) {
+            if (specificTile.isDestination) {
+                startNode = specificTile;
             }
         }
         return pathToTile(startNode);
     }
 
-    private ArrayList<Tile> pathToTile(Tile tile) { //OKAY TRY TO MODIFY
-        ArrayList<Tile> path = new ArrayList<>();
-        path.add(tile);
+    private ArrayList<Tile> pathToTile(Tile tile) { //OKAY
+        ArrayList<Tile> actualPath = new ArrayList<>();
+        actualPath.add(tile);
         while (tile.predecessor != null) {
             tile = tile.predecessor;
-            path.add(0,tile);
+            actualPath.add(0,tile);
         }
-        return path;
+        return actualPath;
     }
 
     //TODO level 5: Implement basic dijkstra's algorithm to path find to a known destination
-    public ArrayList<Tile> findPath(Tile start, Tile end) {
+    public ArrayList<Tile> findPath(Tile start, Tile end) { //OKAY
         dijkstra(start);
-        for (Tile tile : ShortestPath) {
-            if (tile.nodeID == end.nodeID) {
-                end = tile;
+        for (Tile specificTile : ShortestPath) {
+            if (specificTile.nodeID == end.nodeID) {
+                end = specificTile;
             }
         }
         return pathToTile(end);
     }
 
     //TODO level 5: Implement basic dijkstra's algorithm to path find to the final destination passing through given waypoints
-    public ArrayList<Tile> findPath(Tile start, LinkedList<Tile> waypoints){
+    public ArrayList<Tile> findPath(Tile start, LinkedList<Tile> waypoints){    //OKAY 100%
         ArrayList<Tile> path = new ArrayList<>();
-        for (Tile tile : waypoints) {
-            path.addAll(findPath(start,tile));
+        for (Tile specificTile : waypoints) {
+            path.addAll(findPath(start,specificTile));
             path.remove(path.size()-1);
-            start = tile;
+            start = specificTile;
         }
-        path.addAll(findPath(start));
+        ArrayList<Tile> foundPath = findPath(start);
+        for (Tile tile : foundPath){
+            path.add(tile);
+        }
         return path;
     }
 
 
-    private void dijkstra(Tile start) {
+    private void dijkstra(Tile origin) {    //OKAY
         ShortestPath = new ArrayList<>();
-        initSingleSource(start);
-        while(PriorityQueue.size > 0) {
+        initSingleSource(origin);
+        while(!PriorityQueue.heap.isEmpty()) {      //CHANGE IN LAST MINUTE
             Tile u = PriorityQueue.removeMin();
             ShortestPath.add(u);
             for (Tile v : g.getNeighbors(u)) {
@@ -75,17 +79,17 @@ public abstract class PathFindingService {
         }
     }
 
-    private void initSingleSource(Tile startNode) {
+    private void initSingleSource(Tile originNode) {    //OKAY 100%
         for (Tile tile : g.listOfVertices) {        //set predecessor to null and cost estimate to max
             tile.costEstimate = Double.MAX_VALUE;
             tile.predecessor = null;
         }
         PriorityQueue = new TilePriorityQ(g.listOfVertices);
-        PriorityQueue.updateKeys(startNode,null,0);
+        PriorityQueue.updateKeys(originNode,null,0);
     }
 
 
-    private void relax(Tile u, Tile v) {
+    private void relax(Tile u, Tile v) {    //OKAY 100%
         ArrayList<Tile> path = new ArrayList<>();
         path.add(u);
         path.add(v);
